@@ -1,0 +1,9 @@
+module keyboard (input logic MAX10_CLK1_50,
+						input logic KEY0,
+						inout wire [15:0] ARDUINO_IO,
+						output logic[:0] LEDR）；
+						
+						
+
+endmodule
+						
