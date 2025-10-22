@@ -1,10 +1,35 @@
 module keyboard (input logic MAX10_CLK1_50,
 						input logic KEY0,
 						inout wire [15:0] ARDUINO_IO,
-						output logic[9:0] LEDR）；
+						output logic[9:0] LEDR)；
 						
-						logic [3:0] row_scan, keycode;
+						logic [3:0] row_scan, keycode,row,col;
+						logic clk, reset;
+						logic valid_db,debounceOK,key_validn;
 						
+						assign reset = ~KEY0;
+						assign clk = MAX10_CLK1_50;
+						
+						 kb_db #(.DELAY(16)) kb_debounce (.clk(clk),
+																	  .rst(reset),
+																	  .row_wires(ARDUINO_IO[7:4]),
+																	  .col_wires(ARDUINO_IO[3:0]),
+																	  .row_scan(row_scan),
+																	  .row(row),
+																	  .col(col),
+																	  .valid(valid_db),
+																	  .debounceOK(debounceOK));
+																	  
+																	  
+																	  
+						
+						  keyboard_fsm fsm (.clk(clk),
+												  .reset(reset),
+												  .row(row),
+												  .col(col),
+												  .keycode(keycode),
+												  .row_scan(row_scan),
+												  .key_valid(key_validn));
 						
 						
 
@@ -73,36 +98,113 @@ module keyboard_fsm(input logic clk,
 						  input logic [3:0] row, col,
 						  output logic [3:0] keycode,
 						  output logic [3:0] row_scan
-						  output logic key_validn);
+						  output logic key_valid);
 						  
 						  logic [1:0] present_state, next_state;
+						  logic key_hold;
 						  
 						  always_ff @(posedge clk) begin
 								if(reset) begin
 									present_state <= 2'b00;
+									key_hold <= 0;
+									keycode <= 4'h0;
+									key_valid <= 0;
 								end
 								else begin
 									present_state <= next_state;
+									key_valid <=0;
 								end
 							end
 							
 							always_comb begin
+							keycode = 4'h0;
+							key_valid = 1'b0;
 								case({row_scan,col})
 									8'b1110_1110:begin
 										keycode = 4'h1;
+										key_validn =1;
 									end
 									
 									8'b1110_1101:begin
 										keycode = 4'h2;
+										key_validn =1;
 									end	
 							
 									8'b1110_1011:begin
 										keycode = 4'h3;
+										key_validn =1;
 									end	
 									
 									8'b1110_0111:begin
 										keycode = 4'h2;
+										key_validn =1;
 									end
+									
+									8'b1101_1110: begin
+										  keycode = 4'h4;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b1101_1101: begin
+										  keycode = 4'h5;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b1101_1011: begin
+										  keycode = 4'h6;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b1101_0111: begin
+										  keycode = 4'hB;
+										  key_valid = 1'b1;
+									 end
+									 
+									 // Row 3
+									 8'b1011_1110: begin
+										  keycode = 4'h7;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b1011_1101: begin
+										  keycode = 4'h8;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b1011_1011: begin
+										  keycode = 4'h9;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b1011_0111: begin
+										  keycode = 4'hC;
+										  key_valid = 1'b1;
+									 end
+									 
+									 // Row 4
+									 8'b0111_1110: begin
+										  keycode = 4'hE; // *
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b0111_1101: begin
+										  keycode = 4'h0;
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b0111_1011: begin
+										  keycode = 4'hF; // #
+										  key_valid = 1'b1;
+									 end
+									 
+									 8'b0111_0111: begin
+										  keycode = 4'hD;
+										  key_valid = 1'b1;
+									 end
+									 
+									 default: begin
+										  key_valid = 1'b0;
+									 end
 								endcase;
 							end	
 							
