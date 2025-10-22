@@ -1,7 +1,7 @@
 module keyboard (input logic MAX10_CLK1_50,
 						input logic KEY0,
 						inout wire [15:0] ARDUINO_IO,
-						output logic[9:0] LEDR)；
+						output logic[9:0] LEDR);
 						
 						logic [3:0] row_scan, keycode,row,col;
 						logic clk, reset;
@@ -97,7 +97,7 @@ module keyboard_fsm(input logic clk,
 						  input logic reset,
 						  input logic [3:0] row, col,
 						  output logic [3:0] keycode,
-						  output logic [3:0] row_scan
+						  output logic [3:0] row_scan,
 						  output logic key_valid);
 						  
 						  logic [1:0] present_state, next_state;
@@ -106,38 +106,34 @@ module keyboard_fsm(input logic clk,
 						  always_ff @(posedge clk) begin
 								if(reset) begin
 									present_state <= 2'b00;
-									key_hold <= 0;
-									keycode <= 4'h0;
-									key_valid <= 0;
 								end
 								else begin
 									present_state <= next_state;
-									key_valid <=0;
 								end
 							end
 							
 							always_comb begin
 							keycode = 4'h0;
 							key_valid = 1'b0;
-								case({row_scan,col})
+								case({row,col})
 									8'b1110_1110:begin
 										keycode = 4'h1;
-										key_validn =1;
+										key_valid =1;
 									end
 									
 									8'b1110_1101:begin
 										keycode = 4'h2;
-										key_validn =1;
+										key_valid =1;
 									end	
 							
 									8'b1110_1011:begin
 										keycode = 4'h3;
-										key_validn =1;
+										key_valid =1;
 									end	
 									
 									8'b1110_0111:begin
 										keycode = 4'h2;
-										key_validn =1;
+										key_valid =1;
 									end
 									
 									8'b1101_1110: begin
@@ -210,7 +206,7 @@ module keyboard_fsm(input logic clk,
 							
 							
 							always_comb begin
-							nesxt_state = present_state;
+							next_state = present_state;
 								case(present_state)
 									2'b00: begin
 										next_state = 2'b01;
@@ -227,7 +223,7 @@ module keyboard_fsm(input logic clk,
 										row_scan = 4'b1011;
 									end
 									
-									2'b11 begin 
+									2'b11: begin 
 										next_state = 2'b00;
 										row_scan = 4'b0111;
 									end
